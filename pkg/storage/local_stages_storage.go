@@ -305,7 +305,7 @@ func (storage *LocalStagesStorage) StoreContentTag(ctx context.Context, projectN
 	}
 	labels[image.WerfParentStageID] = stageDesc.StageID.String()
 
-	newID, err := container_backend.MutateAndPushImage(ctx, stageDesc.Info.Name, stageImage.GetTargetPlatform(), image.SpecConfig{Labels: labels}, storage.ContainerBackend)
+	newID, err := container_backend.MutateAndPushImage(ctx, stageDesc.Info.Name, stageImage.GetTargetPlatform(), image.SpecConfig{Labels: labels, Env: stageDesc.Info.Env}, storage.ContainerBackend)
 	if err != nil {
 		return nil, fmt.Errorf("mutate content tag image from %s: %w", stageDesc.Info.Name, err)
 	}

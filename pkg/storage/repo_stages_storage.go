@@ -463,7 +463,7 @@ func (storage *RepoStagesStorage) StoreContentTag(ctx context.Context, projectNa
 	}
 	labels[image.WerfParentStageID] = stageDesc.StageID.String()
 
-	if err := storage.MutateAndPushImage(ctx, stageDesc.Info.Name, destReference, image.SpecConfig{Labels: labels}, stageImage); err != nil {
+	if err := storage.MutateAndPushImage(ctx, stageDesc.Info.Name, destReference, image.SpecConfig{Labels: labels, Env: stageDesc.Info.Env}, stageImage); err != nil {
 		return nil, fmt.Errorf("mutate and push content tag image from %s to %s: %w", stageDesc.Info.Name, destReference, err)
 	}
 
