@@ -516,7 +516,7 @@ func (c *Conveyor) GetImageInfoGetters(opts imagePkg.InfoGetterOptions) ([]*imag
 
 		if len(platforms) == 1 {
 			img := images[0]
-			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetLastNonEmptyStage().GetStageImage().Image.GetStageDesc(), opts)
+			getter := c.StorageManager.GetImageInfoGetter(img.Name, img.GetContentTagDesc(), opts)
 			imagesGetters = append(imagesGetters, getter)
 		} else {
 			img := c.imagesTree.GetMultiplatformImage(name)
