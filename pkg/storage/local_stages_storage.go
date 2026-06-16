@@ -295,23 +295,12 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _
 	return nil
 }
 
-func (storage *LocalStagesStorage) StoreContentTag(ctx context.Context, projectName, contentDigest string, stageDesc *image.StageDesc, stageImage container_backend.LegacyImageInterface) (*image.StageDesc, error) {
+func (storage *LocalStagesStorage) StoreContentTag(ctx context.Context, projectName, contentDigest string, stageDesc *image.StageDesc, _ container_backend.LegacyImageInterface) (*image.StageDesc, error) {
 	creationTs := stageDesc.StageID.CreationTs
 	destReference := storage.ConstructStageImageName(projectName, contentDigest, creationTs)
 
-	labels := make(map[string]string, len(stageDesc.Info.Labels)+1)
-	for k, v := range stageDesc.Info.Labels {
-		labels[k] = v
-	}
-	labels[image.WerfParentStageID] = stageDesc.StageID.String()
-
-	newID, err := container_backend.MutateAndPushImage(ctx, stageDesc.Info.Name, stageImage.GetTargetPlatform(), image.SpecConfig{Labels: labels, Env: stageDesc.Info.Env}, storage.ContainerBackend)
-	if err != nil {
-		return nil, fmt.Errorf("mutate content tag image from %s: %w", stageDesc.Info.Name, err)
-	}
-
-	if err := storage.ContainerBackend.Tag(ctx, newID, destReference, container_backend.TagOpts{}); err != nil {
-		return nil, fmt.Errorf("tag content tag image %s as %s: %w", newID, destReference, err)
+	if err := storage.ContainerBackend.Tag(ctx, stageDesc.Info.Name, destReference, container_backend.TagOpts{}); err != nil {
+		return nil, fmt.Errorf("tag content tag image %s as %s: %w", stageDesc.Info.Name, destReference, err)
 	}
 
 	return storage.GetContentTagStageDesc(ctx, projectName, contentDigest, creationTs)
