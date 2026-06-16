@@ -111,7 +111,7 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 	for _, dep := range s.dependencies {
 		depImageServiceOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		depImageName := c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.ImageName)
 		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
@@ -152,7 +152,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		if elm.ExternalImage {
 			sourceImageName = elm.From
 		} else {
-			sourceImageName = c.GetImageContentTagStageID(s.targetPlatform, getSourceImageName(elm))
+			sourceImageName = c.GetImageContentTagName(s.targetPlatform, getSourceImageName(elm))
 		}
 
 		sourceStageIDLabelKey := image.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
@@ -165,7 +165,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	}
 
 	for _, dep := range s.dependencies {
-		depImageName := c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagName(s.targetPlatform, dep.ImageName)
 		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 

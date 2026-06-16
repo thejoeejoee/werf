@@ -110,6 +110,10 @@ func (c *ConveyorStub) GetImageContentTagStageID(targetPlatform, imageName strin
 	return c.lastStageImageNameByImageName[imageName]
 }
 
+func (c *ConveyorStub) GetImageContentTagName(targetPlatform, imageName string) string {
+	return c.lastStageImageNameByImageName[imageName]
+}
+
 type GiterminismInspectorStub struct {
 	giterminism_manager.Inspector
 }

@@ -21,7 +21,7 @@ func ResolveDependenciesArgs(targetPlatform string, dependencies []*config.Depen
 	resolved := make(map[string]string)
 
 	for _, dep := range dependencies {
-		depImageName := c.GetImageContentTagStageID(targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagName(targetPlatform, dep.ImageName)
 		depImageDigest := c.GetImageContentTagDigest(targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 

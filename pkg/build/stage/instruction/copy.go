@@ -35,7 +35,7 @@ func (stg *Copy) ExpandInstruction(c stage.Conveyor, env map[string]string) erro
 
 	if stg.instruction.Data.From != "" {
 		if ds := stg.instruction.GetDependencyByStageRef(stg.instruction.Data.From); ds != nil {
-			depStageImageName := c.GetImageContentTagStageID(stg.TargetPlatform(), ds.GetWerfImageName())
+			depStageImageName := c.GetImageContentTagName(stg.TargetPlatform(), ds.GetWerfImageName())
 			stg.backendInstruction.From = depStageImageName
 		}
 	}

@@ -309,7 +309,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			if fromExternalImage {
 				dockerImageName = imageName
 			} else {
-				dockerImageName = c.GetImageContentTagStageID(targetPlatform, imageName)
+				dockerImageName = c.GetImageContentTagName(targetPlatform, imageName)
 			}
 
 			var err error
@@ -558,7 +558,7 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 			continue
 		}
 
-		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContentTagStageID(img.TargetPlatform, img.Name)))
+		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContentTagName(img.TargetPlatform, img.Name)))
 	}
 
 	return envArray
@@ -1009,6 +1009,10 @@ func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) 
 
 func (c *Conveyor) GetImageContentTagStageID(targetPlatform, imageName string) string {
 	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().StageID.String()
+}
+
+func (c *Conveyor) GetImageContentTagName(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().Info.Name
 }
 
 func (c *Conveyor) GetImageContentTagDigest(targetPlatform, imageName string) string {
