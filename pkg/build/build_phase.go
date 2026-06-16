@@ -124,20 +124,31 @@ func (phase *BuildPhase) BeforeImages(ctx context.Context) error {
 }
 
 func (phase *BuildPhase) CalculateImageContentDigest(ctx context.Context, img *image.Image) error {
-	var args []string
-	args = append(args, img.TargetPlatform)
+	var stageDeps []string
 	for _, stg := range img.GetStages() {
 		deps, err := stg.GetContentDependencies(ctx, phase.Conveyor, phase.buildContextArchive)
 		if err != nil {
 			return fmt.Errorf("stage %q GetContentDependencies: %w", stg.Name(), err)
 		}
+		stageDeps = append(stageDeps, deps)
+	}
+	img.SetContentDigest(calculateContentDigest(img.TargetPlatform, stageDeps))
+	return nil
+}
+
+// calculateContentDigest hashes the target platform together with the
+// non-empty stage content dependencies. Stages that contribute nothing
+// (empty string) MUST NOT influence the result, so their presence or
+// absence in stageDeps does not change the digest.
+func calculateContentDigest(targetPlatform string, stageDeps []string) string {
+	args := []string{targetPlatform}
+	for _, deps := range stageDeps {
 		if deps == "" {
 			continue
 		}
 		args = append(args, deps)
 	}
-	img.SetContentDigest(util.Sha3_224Hash(args...))
-	return nil
+	return util.Sha3_224Hash(args...)
 }
 
 func (phase *BuildPhase) CheckImageContentTagExistence(ctx context.Context, img *image.Image) error {
