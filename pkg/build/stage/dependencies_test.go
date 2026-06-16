@@ -49,7 +49,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("should change stage digest and set configured environment variables when dependencies are set",
 			TestDependencies{
-				ExpectedDigest: "aebbe21eeaadcae6ecaaa8a70be1a68ef0c9298f68a03f7f4b80da596294beea",
+				ExpectedDigest: "17136cd6b67a73a8e34bc0159bfeb0d1e09d6a72938bc88237bc142065d2442f",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -110,7 +110,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("new image added into dependencies should change stage digest and environment variables",
 			TestDependencies{
-				ExpectedDigest: "6c77768b19f981b9ba782e5eaf9446851355d99af756bcfb484b041c7d995fec",
+				ExpectedDigest: "af77bedbeed9d219d07e025dd8a8646060b5b070e8382450c53e38cdd8763066",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -157,7 +157,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("should change stage digest and environment variables when previously added image dependency params has been changed",
 			TestDependencies{
-				ExpectedDigest: "8cdb8795ddb40f0e0833a5ea81eed04abc54731e7481ebb8aaff939d77b6f3c5",
+				ExpectedDigest: "f74b3c850624e929061bec0dc589e48f98b75976fa4644441991f0c1db47f7ca",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",
@@ -196,7 +196,7 @@ var _ = Describe("DependenciesStage", func() {
 
 		Entry("should change stage digest and set configured environment variables when dependant image environment variable has been changed",
 			TestDependencies{
-				ExpectedDigest: "c6e59b8fc4c8764cbd42a78bc9c5e21be8b05aa481f3a8e24f297f2e05289e71",
+				ExpectedDigest: "0fed004923c98a459c7122d2f20f2e647a3098cb05c7d783317458e7fd5992d5",
 				Dependencies: []*TestDependency{
 					{
 						ImageName:          "one",

@@ -129,7 +129,7 @@ RUN echo hello
 RUN echo {"name": "${IMAGE_ONE_NAME}", "repo": "${IMAGE_ONE_REPO}", "tag": "${IMAGE_ONE_TAG}"} >> images.json
 `),
 				TestDependencies: &TestDependencies{
-					ExpectedDigest: "2146d6030e32b46ecc0e4bcd300c37c7528c2bb99b3e300321254c545d9886cb",
+					ExpectedDigest: "6ab9de52e1aa389b7e0f684b052c8047dc6c1e01709e1daacc305e4c23211941",
 					Dependencies: []*TestDependency{
 						{
 							ImageName:               "one",

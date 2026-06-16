@@ -98,7 +98,7 @@ func (c *ConveyorStub) UseLegacyStapelBuilder(cr container_backend.ContainerBack
 	return true
 }
 
-func (c *ConveyorStub) GetImageContextTagDigest(targetPlatform, imageName string) string {
+func (c *ConveyorStub) GetImageContentTagDigest(targetPlatform, imageName string) string {
 	return c.lastStageImageDigestByImageName[imageName]
 }
 
@@ -106,8 +106,8 @@ func (c *ConveyorStub) GiterminismManager() giterminism_manager.Interface {
 	return c.giterminismManager
 }
 
-func (c *ConveyorStub) GetImageContextTagStageID(targetPlatform, imageName string) string {
-	return c.lastStageImageDigestByImageName[imageName]
+func (c *ConveyorStub) GetImageContentTagStageID(targetPlatform, imageName string) string {
+	return c.lastStageImageNameByImageName[imageName]
 }
 
 type GiterminismInspectorStub struct {
