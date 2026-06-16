@@ -75,6 +75,14 @@ type StagesStorage interface {
 	MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error
 	PostManifest(ctx context.Context, ref string, opts container_backend.PostManifestOpts) error
 
+	// StoreContentTag publishes a content tag as a digest-discoverable stage named
+	// <contentDigest>-<creationTs> and returns its descriptor. It is a first-class
+	// werf entity and MUST NOT be mixed with the user --custom-tag machinery.
+	StoreContentTag(ctx context.Context, projectName, contentDigest string, stageDesc *image.StageDesc, stageImage container_backend.LegacyImageInterface) (*image.StageDesc, error)
+	// GetContentTagStageDesc returns the content tag stage descriptor for the given
+	// content digest and creation timestamp, or nil if it does not exist.
+	GetContentTagStageDesc(ctx context.Context, projectName, contentDigest string, creationTs int64) (*image.StageDesc, error)
+
 	CreateRepo(ctx context.Context) error
 	DeleteRepo(ctx context.Context) error
 

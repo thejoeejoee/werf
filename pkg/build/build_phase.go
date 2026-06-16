@@ -165,11 +165,6 @@ func (phase *BuildPhase) CheckImageContentTagExistence(ctx context.Context, img 
 			return fmt.Errorf("copy content tag stage from %s to %s: %w", cacheStorage.String(), storageManager.GetStagesStorage().String(), err)
 		}
 
-		contextTag := fmt.Sprintf("%s-%d", contentDigest, copiedDesc.StageID.CreationTs)
-		if err := addCustomImageTag(ctx, phase.Conveyor.ProjectName(), storageManager.GetStagesStorage(), storageManager.GetStagesStorage(), copiedDesc, contextTag); err != nil {
-			return fmt.Errorf("publish content tag after copy: %w", err)
-		}
-
 		img.SetContentTagDesc(copiedDesc)
 	}
 
@@ -585,40 +580,23 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 		stageDesc = stageImage.GetStageDesc()
 	}
 	if stageDesc == nil {
-		return nil, nil
+		return nil, fmt.Errorf("last stage of image %q has no stage descriptor, cannot publish content tag", img.GetName())
 	}
 
-	contextTag := fmt.Sprintf("%s-%d", contentDigest, stageDesc.StageID.CreationTs)
+	contentTag := fmt.Sprintf("%s-%d", contentDigest, stageDesc.StageID.CreationTs)
 
 	var contentTagDesc *imagePkg.StageDesc
-	err := logboek.Context(ctx).Default().LogProcess("tag %s", contextTag).
+	err := logboek.Context(ctx).Default().LogProcess("tag %s", contentTag).
 		DoError(func() error {
-			srcReference := stageDesc.Info.Name
-			destReference := fmt.Sprintf("%s:%s", stageDesc.Info.Repository, contextTag)
-
-			labels := make(map[string]string)
-			for k, v := range stageDesc.Info.Labels {
-				labels[k] = v
-			}
-			labels[imagePkg.WerfParentStageID] = stageDesc.StageID.String()
-
-			if err := stagesStorage.MutateAndPushImage(ctx, srcReference, destReference, imagePkg.SpecConfig{Labels: labels}, stageImage); err != nil {
-				return fmt.Errorf("mutate and push content tag image from %s to %s: %w", srcReference, destReference, err)
-			}
-
-			primaryStagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
-			if err := primaryStagesStorage.RegisterStageCustomTag(ctx, phase.Conveyor.ProjectName(), stageDesc, contextTag); err != nil {
-				return fmt.Errorf("register content tag %s in primary storage %s: %w", contextTag, primaryStagesStorage.String(), err)
-			}
-
-			contextTagStageID := imagePkg.NewStageID(contentDigest, stageDesc.StageID.CreationTs)
-			desc, err := stagesStorage.GetStageDesc(ctx, phase.Conveyor.ProjectName(), *contextTagStageID)
+			desc, err := stagesStorage.StoreContentTag(ctx, phase.Conveyor.ProjectName(), contentDigest, stageDesc, stageImage)
 			if err != nil {
-				return fmt.Errorf("get content tag stage desc %s: %w", contextTagStageID.String(), err)
+				return fmt.Errorf("store content tag %s: %w", contentTag, err)
 			}
 			contentTagDesc = desc
 
-			logboek.Context(ctx).LogFDetails("  name: %s\n", destReference)
+			if desc != nil {
+				logboek.Context(ctx).LogFDetails("  name: %s\n", desc.Info.Name)
+			}
 
 			return nil
 		})

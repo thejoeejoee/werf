@@ -295,6 +295,27 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _
 	return nil
 }
 
+func (storage *LocalStagesStorage) StoreContentTag(ctx context.Context, projectName, contentDigest string, stageDesc *image.StageDesc, stageImage container_backend.LegacyImageInterface) (*image.StageDesc, error) {
+	creationTs := stageDesc.StageID.CreationTs
+	destReference := storage.ConstructStageImageName(projectName, contentDigest, creationTs)
+
+	labels := make(map[string]string, len(stageDesc.Info.Labels)+1)
+	for k, v := range stageDesc.Info.Labels {
+		labels[k] = v
+	}
+	labels[image.WerfParentStageID] = stageDesc.StageID.String()
+
+	if err := storage.MutateAndPushImage(ctx, stageDesc.Info.Name, destReference, image.SpecConfig{Labels: labels}, stageImage); err != nil {
+		return nil, fmt.Errorf("mutate and push content tag image from %s to %s: %w", stageDesc.Info.Name, destReference, err)
+	}
+
+	return storage.GetContentTagStageDesc(ctx, projectName, contentDigest, creationTs)
+}
+
+func (storage *LocalStagesStorage) GetContentTagStageDesc(ctx context.Context, projectName, contentDigest string, creationTs int64) (*image.StageDesc, error) {
+	return storage.GetStageDesc(ctx, projectName, *image.NewStageID(contentDigest, creationTs))
+}
+
 func (storage *LocalStagesStorage) CopyFromStorage(_ context.Context, _ StagesStorage, _ string, _ image.StageID, _ CopyFromStorageOptions) (*image.StageDesc, error) {
 	panic("not implemented")
 }
