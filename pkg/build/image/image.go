@@ -111,8 +111,7 @@ type Image struct {
 	stageDurations    map[stage.StageName]time.Duration
 	lastNonEmptyStage stage.Interface
 	contentDigest     string
-	contextDigest     string
-	contextTagDesc    *image.StageDesc
+	contentTagDesc    *image.StageDesc
 	rebuilt           bool
 	useCustomTag      bool
 
@@ -211,20 +210,12 @@ func (i *Image) GetContentDigest() string {
 	return i.contentDigest
 }
 
-func (i *Image) SetContextDigest(digest string) {
-	i.contextDigest = digest
+func (i *Image) SetContentTagDesc(desc *image.StageDesc) {
+	i.contentTagDesc = desc
 }
 
-func (i *Image) GetContextDigest() string {
-	return i.contextDigest
-}
-
-func (i *Image) SetContextTagDesc(desc *image.StageDesc) {
-	i.contextTagDesc = desc
-}
-
-func (i *Image) GetContextTagDesc() *image.StageDesc {
-	return i.contextTagDesc
+func (i *Image) GetContentTagDesc() *image.StageDesc {
+	return i.contentTagDesc
 }
 
 func (i *Image) GetStage(name stage.StageName) stage.Interface {

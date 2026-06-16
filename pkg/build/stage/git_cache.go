@@ -74,9 +74,9 @@ func (s *GitCacheStage) gitMappingsPatchSize(ctx context.Context, c Conveyor, pr
 	return size, nil
 }
 
-// GetContextDependencies returns empty: all git file content is already
-// checksummed by GitArchiveStage.GetContextDependencies.
-func (s *GitCacheStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+// GetContentDependencies returns empty: all git file content is already
+// checksummed by GitArchiveStage.GetContentDependencies.
+func (s *GitCacheStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return "", nil
 }
 

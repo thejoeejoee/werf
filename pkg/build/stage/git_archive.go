@@ -55,10 +55,10 @@ func (s *GitArchiveStage) GetDependencies(ctx context.Context, c Conveyor, cb co
 	return util.Sha256Hash(args...), nil
 }
 
-// GetContextDependencies checksums all git-tracked files for the context digest.
+// GetContentDependencies checksums all git-tracked files for the content digest.
 // This is the only git stage that contributes file content: GitCache and GitLatestPatch
 // return empty context dependencies because their file changes are already covered here.
-func (s *GitArchiveStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (s *GitArchiveStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	var args []string
 	for _, gitMapping := range s.gitMappings {
 		if gitMapping.IsLocal() {

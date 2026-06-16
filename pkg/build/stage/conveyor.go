@@ -9,8 +9,8 @@ import (
 )
 
 type Conveyor interface {
-	GetImageContextTagStageID(targetPlatform, imageName string) string
-	GetImageContextTagDigest(targetPlatform, imageName string) string
+	GetImageContentTagStageID(targetPlatform, imageName string) string
+	GetImageContentTagDigest(targetPlatform, imageName string) string
 
 	GetImportServer(ctx context.Context, targetPlatform, imageName string, fromExternalImage bool) (import_server.ImportServer, error)
 

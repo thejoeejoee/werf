@@ -64,9 +64,9 @@ func (s *GitLatestPatchStage) GetDependencies(ctx context.Context, c Conveyor, c
 	return util.Sha256Hash(args...), nil
 }
 
-// GetContextDependencies returns empty: all git file content is already
-// checksummed by GitArchiveStage.GetContextDependencies.
-func (s *GitLatestPatchStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+// GetContentDependencies returns empty: all git file content is already
+// checksummed by GitArchiveStage.GetContentDependencies.
+func (s *GitLatestPatchStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return "", nil
 }
 

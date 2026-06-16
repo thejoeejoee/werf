@@ -74,7 +74,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 	}
 
 	for _, dep := range s.dependencies {
-		args = append(args, "Dependency", c.GetImageContextTagStageID(s.targetPlatform, dep.ImageName))
+		args = append(args, "Dependency", c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName))
 		for _, imp := range dep.Imports {
 			args = append(args, "DependencyImport", getDependencyImportID(imp))
 		}
@@ -83,7 +83,7 @@ func (s *DependenciesStage) GetDependencies(ctx context.Context, c Conveyor, _ c
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DependenciesStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (s *DependenciesStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 
@@ -111,8 +111,8 @@ func (s *DependenciesStage) prepareImageWithLegacyStapelBuilder(ctx context.Cont
 	for _, dep := range s.dependencies {
 		depImageServiceOptions := stageImage.Builder.LegacyStapelStageBuilder().Container().ServiceCommitChangeOptions()
 
-		depImageName := c.GetImageContextTagStageID(s.targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageContextTagDigest(s.targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName)
+		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -152,7 +152,7 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 		if elm.ExternalImage {
 			sourceImageName = elm.From
 		} else {
-			sourceImageName = c.GetImageContextTagStageID(s.targetPlatform, getSourceImageName(elm))
+			sourceImageName = c.GetImageContentTagStageID(s.targetPlatform, getSourceImageName(elm))
 		}
 
 		sourceStageIDLabelKey := image.WerfImportSourceStageIDLabelPrefix + getImportID(elm)
@@ -165,8 +165,8 @@ func (s *DependenciesStage) prepareImage(ctx context.Context, c Conveyor, cr con
 	}
 
 	for _, dep := range s.dependencies {
-		depImageName := c.GetImageContextTagStageID(s.targetPlatform, dep.ImageName)
-		depImageDigest := c.GetImageContextTagDigest(s.targetPlatform, dep.ImageName)
+		depImageName := c.GetImageContentTagStageID(s.targetPlatform, dep.ImageName)
+		depImageDigest := c.GetImageContentTagDigest(s.targetPlatform, dep.ImageName)
 		depImageRepo, depImageTag := image.ParseRepositoryAndTag(depImageName)
 
 		for _, img := range dep.Imports {
@@ -233,7 +233,7 @@ func getSourceStageID(c Conveyor, targetPlatform string, importElm *config.Impor
 		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
 	}
 
-	return c.GetImageContextTagStageID(targetPlatform, getSourceImageName(importElm))
+	return c.GetImageContentTagStageID(targetPlatform, getSourceImageName(importElm))
 }
 
 func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Import) string {
@@ -241,7 +241,7 @@ func getSourceImageID(c Conveyor, targetPlatform string, importElm *config.Impor
 		return fmt.Sprintf("%s:%s", image.WerfImportSourceExternalImagePrefix, importElm.From)
 	}
 
-	return c.GetImageContextTagStageID(targetPlatform, getSourceImageName(importElm))
+	return c.GetImageContentTagStageID(targetPlatform, getSourceImageName(importElm))
 }
 
 func getSourceImageName(importElm *config.Import) string {

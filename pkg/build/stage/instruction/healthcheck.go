@@ -22,7 +22,7 @@ func NewHealthcheck(i *dockerfile.DockerfileStageInstruction[*instructions.Healt
 	return &Healthcheck{Base: NewBase(i, backend_instruction.NewHealthcheck(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stg *Healthcheck) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (stg *Healthcheck) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 

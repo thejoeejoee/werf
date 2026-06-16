@@ -81,7 +81,7 @@ func (s *From) PreRun(ctx context.Context, _ stage.Conveyor) error {
 	return nil
 }
 
-func (s *From) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (s *From) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return s.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 

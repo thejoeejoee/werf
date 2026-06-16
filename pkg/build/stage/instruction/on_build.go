@@ -21,7 +21,7 @@ func NewOnBuild(i *dockerfile.DockerfileStageInstruction[*instructions.OnbuildCo
 	return &OnBuild{Base: NewBase(i, backend_instruction.NewOnBuild(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stg *OnBuild) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (stg *OnBuild) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 

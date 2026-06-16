@@ -30,10 +30,10 @@ func (s *UserWithGitPatchStage) SelectSuitableStageDesc(ctx context.Context, c C
 	return s.BaseStage.SelectSuitableStageDesc(ctx, c, stageDescSet)
 }
 
-// GetContextDependencies returns only the builder checksum (shell commands from werf.yaml)
+// GetContentDependencies returns only the builder checksum (shell commands from werf.yaml)
 // without StageDependenciesChecksum. Git file checksums are already fully accounted for
-// by GitArchiveStage.GetContextDependencies, which checksums all files.
-func (s *UserWithGitPatchStage) GetContextDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+// by GitArchiveStage.GetContentDependencies, which checksums all files.
+func (s *UserWithGitPatchStage) GetContentDependencies(ctx context.Context, c Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return s.getBuilderChecksum(ctx), nil
 }
 

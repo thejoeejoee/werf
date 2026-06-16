@@ -22,7 +22,7 @@ func NewCmd(i *dockerfile.DockerfileStageInstruction[*instructions.CmdCommand], 
 	return &Cmd{Base: NewBase(i, backend_instruction.NewCmd(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stg *Cmd) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (stg *Cmd) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 

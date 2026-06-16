@@ -21,7 +21,7 @@ func NewVolume(i *dockerfile.DockerfileStageInstruction[*instructions.VolumeComm
 	return &Volume{Base: NewBase(i, backend_instruction.NewVolume(*i.Data), dependencies, hasPrevStage, opts)}
 }
 
-func (stg *Volume) GetContextDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
+func (stg *Volume) GetContentDependencies(ctx context.Context, c stage.Conveyor, buildContextArchive container_backend.BuildContextArchiver) (string, error) {
 	return stg.GetDependencies(ctx, c, nil, nil, nil, buildContextArchive)
 }
 

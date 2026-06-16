@@ -309,7 +309,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 			if fromExternalImage {
 				dockerImageName = imageName
 			} else {
-				dockerImageName = c.GetImageContextTagStageID(targetPlatform, imageName)
+				dockerImageName = c.GetImageContentTagStageID(targetPlatform, imageName)
 			}
 
 			var err error
@@ -558,7 +558,7 @@ func (c *Conveyor) GetImagesEnvArray() []string {
 			continue
 		}
 
-		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContextTagStageID(img.TargetPlatform, img.Name)))
+		envArray = append(envArray, GenerateImageEnv(img.Name, c.GetImageContentTagStageID(img.TargetPlatform, img.Name)))
 	}
 
 	return envArray
@@ -822,8 +822,8 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
-				if img.GetContextTagDesc() != nil {
-					logboek.Context(ctx).Default().LogFHighlight("Use previously built image (context tag %s)\n", img.GetContextTagDesc().StageID.String())
+				if img.GetContentTagDesc() != nil {
+					logboek.Context(ctx).Default().LogFHighlight("Use previously built image (content tag %s)\n", img.GetContentTagDesc().StageID.String())
 					logboek.Context(ctx).LogOptionalLn()
 					return nil
 				}
@@ -1007,10 +1007,10 @@ func (c *Conveyor) FindImage(targetPlatform, name string) (*image.Image, error) 
 	return nil, fmt.Errorf("image %q not found", name)
 }
 
-func (c *Conveyor) GetImageContextTagStageID(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetContextTagDesc().StageID.String()
+func (c *Conveyor) GetImageContentTagStageID(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().StageID.String()
 }
 
-func (c *Conveyor) GetImageContextTagDigest(targetPlatform, imageName string) string {
-	return c.GetImage(targetPlatform, imageName).GetContextTagDesc().Info.GetDigest()
+func (c *Conveyor) GetImageContentTagDigest(targetPlatform, imageName string) string {
+	return c.GetImage(targetPlatform, imageName).GetContentTagDesc().Info.GetDigest()
 }
