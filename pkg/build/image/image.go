@@ -283,6 +283,20 @@ func isUnsupportedMediaTypeError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "unsupported MediaType")
 }
 
+func (i *Image) newContentTagBaseStage(baseImg *Image, contentTagDesc *image.StageDesc) stage.Interface {
+	stageImage := i.Conveyor.GetOrCreateStageImage(contentTagDesc.Info.Name, nil, nil, baseImg)
+	stageImage.Image.SetStageDesc(contentTagDesc)
+
+	baseStage := stage.NewBaseStage("content-tag-base", &stage.BaseStageOptions{
+		ImageName:      baseImg.Name,
+		ProjectName:    i.ProjectName,
+		TargetPlatform: baseImg.TargetPlatform,
+	})
+	baseStage.SetStageImage(stageImage)
+
+	return baseStage
+}
+
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	logboek.Context(ctx).Debug().LogF(" -- SetupBaseImage for %q\n", i.Name)
 
@@ -292,7 +306,17 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 		if err != nil {
 			return fmt.Errorf("base image for %q: %w", i.Name, err)
 		}
-		i.stageAsBaseImage = baseImg.GetLastNonEmptyStage()
+
+		if lastStage := baseImg.GetLastNonEmptyStage(); lastStage != nil {
+			i.stageAsBaseImage = lastStage
+		} else {
+			contentTagDesc := baseImg.GetContentTagDesc()
+			if contentTagDesc == nil {
+				return fmt.Errorf("base image %q has neither a built stage nor a content tag", i.baseImageName)
+			}
+			i.stageAsBaseImage = i.newContentTagBaseStage(baseImg, contentTagDesc)
+		}
+
 		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
 		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
 
