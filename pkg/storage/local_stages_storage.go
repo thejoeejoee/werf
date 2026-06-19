@@ -53,17 +53,21 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 		for stageDesc := range stageDescSet.Iter() {
 			imageInfo := stageDesc.Info
 
-			if imageInfo.ID == container.ImageID {
-				switch {
-				case opts.SkipUsedImage:
-					logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
-					stageDescSetToExclude.Add(stageDesc)
-				case opts.RmContainersThatUseImage:
-					containerListToRemove = append(containerListToRemove, container)
-				default:
-					return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", imageInfo.LogName(), container.LogName(), ImageDeletionFailedDueToUsedByContainerErrorTip)
-				}
+			if imageInfo.ID != container.ImageID {
+				continue
 			}
+
+			switch {
+			case opts.SkipUsedImage:
+				logboek.Context(ctx).Default().LogFDetails("Skip image %s (used by container %s)\n", imageInfo.LogName(), container.LogName())
+				stageDescSetToExclude.Add(stageDesc)
+			case opts.RmContainersThatUseImage:
+				containerListToRemove = append(containerListToRemove, container)
+			default:
+				return nil, fmt.Errorf("cannot remove image %s used by container %s\n%s", imageInfo.LogName(), container.LogName(), ImageDeletionFailedDueToUsedByContainerErrorTip)
+			}
+
+			break
 		}
 	}
 
@@ -75,7 +79,13 @@ func (storage *LocalStagesStorage) FilterStageDescSetAndProcessRelatedData(ctx c
 }
 
 func (storage *LocalStagesStorage) deleteContainers(ctx context.Context, containers []image.Container, rmForce bool) error {
+	removed := make(map[string]struct{}, len(containers))
 	for _, container := range containers {
+		if _, ok := removed[container.ID]; ok {
+			continue
+		}
+		removed[container.ID] = struct{}{}
+
 		if err := storage.ContainerBackend.Rm(ctx, container.ID, container_backend.RmOpts{Force: rmForce}); err != nil {
 			return fmt.Errorf("unable to remove container %q: %w", container.ID, err)
 		}
