@@ -283,7 +283,14 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 	var srv *import_server.RsyncServer
 
 	if !fromExternalImage {
-		stg := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
+		img := c.GetImage(targetPlatform, imageName)
+		stg := img.GetLastNonEmptyStage()
+		if stg == nil {
+			stg = img.GetContentTagStage()
+		}
+		if stg == nil {
+			return nil, fmt.Errorf("image %q has neither a built stage nor a content tag", imageName)
+		}
 		if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
 			return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
 		}
@@ -433,7 +440,14 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 }
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
-	lastImageStage := c.GetImage(targetPlatform, imageName).GetLastNonEmptyStage()
+	img := c.GetImage(targetPlatform, imageName)
+	lastImageStage := img.GetLastNonEmptyStage()
+	if lastImageStage == nil {
+		lastImageStage = img.GetContentTagStage()
+	}
+	if lastImageStage == nil {
+		return fmt.Errorf("image %q has neither a built stage nor a content tag", imageName)
+	}
 	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
 
 	return err

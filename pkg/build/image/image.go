@@ -297,6 +297,13 @@ func (i *Image) newContentTagBaseStage(baseImg *Image, contentTagDesc *image.Sta
 	return baseStage
 }
 
+func (i *Image) GetContentTagStage() stage.Interface {
+	if i.contentTagDesc == nil {
+		return nil
+	}
+	return i.newContentTagBaseStage(i, i.contentTagDesc)
+}
+
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	logboek.Context(ctx).Debug().LogF(" -- SetupBaseImage for %q\n", i.Name)
 
