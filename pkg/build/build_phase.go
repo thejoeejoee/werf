@@ -614,7 +614,10 @@ func (phase *BuildPhase) publishContentTagToStorage(ctx context.Context, img *im
 	contentTag := fmt.Sprintf("%s-%d", contentDigest, stageDesc.StageID.CreationTs)
 
 	var contentTagDesc *imagePkg.StageDesc
-	err := logboek.Context(ctx).Default().LogProcess("%s/content-tag", img.GetName()).
+	err := logboek.Context(ctx).Default().LogProcess("Building %s/content-tag", img.GetName()).
+		Options(func(options types.LogProcessOptionsInterface) {
+			options.Style(style.Highlight())
+		}).
 		DoError(func() error {
 			desc, err := stagesStorage.StoreContentTag(ctx, phase.Conveyor.ProjectName(), contentDigest, stageDesc, stageImage)
 			if err != nil {
