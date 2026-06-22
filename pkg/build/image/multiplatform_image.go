@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/werf/common-go/pkg/util"
 	"github.com/werf/werf/v2/pkg/image"
@@ -46,6 +47,7 @@ func NewMultiplatformImage(name string, images []*Image, logImageIndex, logImage
 		}
 		return desc.StageID.String()
 	})
+	sort.Strings(contentDeps)
 	img.calculatedDigest = util.Sha3_224Hash(contentDeps...)
 	img.stageID = *common_image.NewStageID(img.GetDigest(), 0)
 
