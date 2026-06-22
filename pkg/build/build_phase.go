@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/moby/buildkit/frontend/dockerfile/instructions"
@@ -1220,13 +1219,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 	stageImage := stg.GetStageImage()
 
 	if stg.IsBuildable() {
-		if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_BUILD"); v != "" {
-			seconds := 0
-			fmt.Sscanf(v, "%d", &seconds)
-			fmt.Printf("Sleeping %d seconds before building new image by digest %s...\n", seconds, stg.GetDigest())
-			time.Sleep(time.Duration(seconds) * time.Second)
-		}
-
 		if err := logboek.Context(ctx).Streams().DoErrorWithTag(fmt.Sprintf("%s/%s", img.LogName(), stg.Name()), img.LogTagStyle(), func() error {
 			opts := phase.ImageBuildOptions
 			opts.TargetPlatform = img.TargetPlatform
@@ -1237,13 +1229,6 @@ func (phase *BuildPhase) atomicBuildStageImage(ctx context.Context, img *image.I
 			return nil
 		}); err != nil {
 			return fmt.Errorf("failed to build image for stage %s with digest %s: %w", stg.Name(), stg.GetDigest(), err)
-		}
-
-		if v := os.Getenv("WERF_TEST_ATOMIC_STAGE_BUILD__SLEEP_SECONDS_BEFORE_STAGE_SAVE"); v != "" {
-			seconds := 0
-			fmt.Sscanf(v, "%d", &seconds)
-			fmt.Printf("Sleeping %d seconds before saving newly built image %s into repo %s by digest %s...\n", seconds, stg.GetStageImage().Image.BuiltID(), phase.Conveyor.StorageManager.GetStagesStorage().String(), stg.GetDigest())
-			time.Sleep(time.Duration(seconds) * time.Second)
 		}
 	}
 
