@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.73.0](https://github.com/werf/werf/compare/v2.72.2...v2.73.0) (2026-06-22)
+
+
+### Features
+
+* **deploy:** move `dockerconfigjson` to .global.werf ([#7583](https://github.com/werf/werf/issues/7583)) ([79d90cb](https://github.com/werf/werf/commit/79d90cb69f563a2ec7b109de5481c4eba45f9722))
+
 ## [2.72.2](https://github.com/werf/werf/compare/v2.72.1...v2.72.2) (2026-06-18)
 
 
