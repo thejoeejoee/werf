@@ -960,20 +960,25 @@ func getStageDesc(ctx context.Context, projectName string, stageID image.StageID
 }
 
 func (m *StorageManager) GenerateStageDescCreationTs(digest string, stageDescSet image.StageDescSet) (string, int64) {
-	var imageName string
+	timeNow := time.Now().UTC()
+	creationTs := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
 
 	for {
-		timeNow := time.Now().UTC()
-		creationTs := timeNow.Unix()*1000 + int64(timeNow.Nanosecond()/1000000)
-		imageName = m.StagesStorage.ConstructStageImageName(m.ProjectName, digest, creationTs)
+		imageName := m.StagesStorage.ConstructStageImageName(m.ProjectName, digest, creationTs)
 
+		collision := false
 		for stageDesc := range stageDescSet.Iter() {
 			if stageDesc.Info.Name == imageName {
-				continue
+				collision = true
+				break
 			}
 		}
 
-		return imageName, creationTs
+		if !collision {
+			return imageName, creationTs
+		}
+
+		creationTs++
 	}
 }
 
