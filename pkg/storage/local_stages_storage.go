@@ -343,7 +343,7 @@ func (storage *LocalStagesStorage) PostManifest(ctx context.Context, ref string,
 	return nil
 }
 
-func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, _ string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
+func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, dest string, newConfig image.SpecConfig, stageImage container_backend.LegacyImageInterface) error {
 	if err := logboek.Context(ctx).Debug().LogBlock("-- LocalStagesStorage.MutateAndPushImage imageSpecConfig").DoError(func() error {
 		newConfigData, err := yaml.Marshal(newConfig)
 		if err != nil {
@@ -361,10 +361,8 @@ func (storage *LocalStagesStorage) MutateAndPushImage(ctx context.Context, src, 
 		return err
 	}
 
-	stageImage.SetBuiltID(newId)
-
-	if err := storage.ContainerBackend.TagImageByName(ctx, stageImage); err != nil {
-		return fmt.Errorf("unable to tag image %q: %w", stageImage.Name(), err)
+	if err := storage.ContainerBackend.Tag(ctx, newId, dest, container_backend.TagOpts{}); err != nil {
+		return fmt.Errorf("unable to tag image %q as %q: %w", newId, dest, err)
 	}
 
 	return nil

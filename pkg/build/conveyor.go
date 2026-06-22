@@ -284,12 +284,12 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 	if !fromExternalImage {
 		img := c.GetImage(targetPlatform, imageName)
-		stg := img.GetBuiltOrContentTagStage()
-		if stg == nil {
-			return nil, fmt.Errorf("image %q has neither a built stage nor a content tag", imageName)
+		contentTagStageImage := img.GetContentTagStageImage()
+		if contentTagStageImage == nil {
+			return nil, fmt.Errorf("image %q has no content tag", imageName)
 		}
-		if _, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, stg); err != nil {
-			return nil, fmt.Errorf("unable to fetch stage %s: %w", stg.GetStageImage().Image.Name(), err)
+		if _, err := c.StorageManager.FetchStageImage(ctx, c.ContainerBackend, imageName, contentTagStageImage); err != nil {
+			return nil, fmt.Errorf("unable to fetch stage %s: %w", contentTagStageImage.Image.Name(), err)
 		}
 	}
 
@@ -438,11 +438,11 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
 	img := c.GetImage(targetPlatform, imageName)
-	lastImageStage := img.GetBuiltOrContentTagStage()
-	if lastImageStage == nil {
-		return fmt.Errorf("image %q has neither a built stage nor a content tag", imageName)
+	contentTagStageImage := img.GetContentTagStageImage()
+	if contentTagStageImage == nil {
+		return fmt.Errorf("image %q has no content tag", imageName)
 	}
-	_, err := c.StorageManager.FetchStage(ctx, c.ContainerBackend, lastImageStage)
+	_, err := c.StorageManager.FetchStageImage(ctx, c.ContainerBackend, imageName, contentTagStageImage)
 
 	return err
 }
@@ -830,8 +830,15 @@ func (c *Conveyor) doImage(ctx context.Context, img *image.Image, phases []Phase
 				}
 				logProcess.End()
 
-				if img.GetContentTagDesc() != nil {
-					logboek.Context(ctx).Default().LogFHighlight("Use previously built image (content tag %s)\n", img.GetContentTagDesc().StageID.String())
+				if contentTagDesc := img.GetContentTagDesc(); contentTagDesc != nil {
+					logboek.Context(ctx).Default().LogFHighlight("Use previously built image for %s/content-tag\n", img.GetName())
+
+					var platform string
+					if img.ShouldLogPlatform() {
+						platform = img.TargetPlatform
+					}
+					container_backend.LogImageInfoByStageDesc(ctx, contentTagDesc, platform)
+
 					logboek.Context(ctx).LogOptionalLn()
 					return nil
 				}

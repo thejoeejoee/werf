@@ -124,8 +124,8 @@ type Image struct {
 	baseImageRepoId     string
 	baseImageRepoDigest string
 
-	baseStageImage   *stage.StageImage
-	stageAsBaseImage stage.Interface
+	baseStageImage       *stage.StageImage
+	contentTagStageImage *stage.StageImage
 
 	stagedDockerfileBaseEnv map[string]string
 
@@ -283,32 +283,13 @@ func isUnsupportedMediaTypeError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "unsupported MediaType")
 }
 
-func (i *Image) newContentTagBaseStage(baseImg *Image, contentTagDesc *image.StageDesc) stage.Interface {
-	stageImage := i.Conveyor.GetOrCreateStageImage(contentTagDesc.Info.Name, nil, nil, baseImg)
-	stageImage.Image.SetStageDesc(contentTagDesc)
-
-	baseStage := stage.NewBaseStage("content-tag-base", &stage.BaseStageOptions{
-		ImageName:      baseImg.Name,
-		ProjectName:    i.ProjectName,
-		TargetPlatform: baseImg.TargetPlatform,
-	})
-	baseStage.SetStageImage(stageImage)
-
-	return baseStage
-}
-
-func (i *Image) GetContentTagStage() stage.Interface {
+func (i *Image) GetContentTagStageImage() *stage.StageImage {
 	if i.contentTagDesc == nil {
 		return nil
 	}
-	return i.newContentTagBaseStage(i, i.contentTagDesc)
-}
-
-func (i *Image) GetBuiltOrContentTagStage() stage.Interface {
-	if stg := i.GetLastNonEmptyStage(); stg != nil {
-		return stg
-	}
-	return i.GetContentTagStage()
+	stageImage := i.Conveyor.GetOrCreateStageImage(i.contentTagDesc.Info.Name, nil, nil, i)
+	stageImage.Image.SetStageDesc(i.contentTagDesc)
+	return stageImage
 }
 
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
@@ -321,13 +302,13 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 			return fmt.Errorf("base image for %q: %w", i.Name, err)
 		}
 
-		i.stageAsBaseImage = baseImg.GetBuiltOrContentTagStage()
-		if i.stageAsBaseImage == nil {
-			return fmt.Errorf("base image %q has neither a built stage nor a content tag", i.baseImageName)
+		i.contentTagStageImage = baseImg.GetContentTagStageImage()
+		if i.contentTagStageImage == nil {
+			return fmt.Errorf("base image %q has no content tag", i.baseImageName)
 		}
 
-		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
-		i.baseStageImage = i.stageAsBaseImage.GetStageImage()
+		i.baseImageReference = i.contentTagStageImage.Image.Name()
+		i.baseStageImage = i.contentTagStageImage
 
 	case ImageFromRegistryAsBaseImage:
 		if i.IsDockerfileImage && i.dockerfileExpanderFactory != nil {
@@ -507,7 +488,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 
 		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRegistry}, nil
 	case FromImage:
-		info, err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
+		info, err := i.StorageManager.FetchStageImage(ctx, i.ContainerBackend, i.baseImageName, i.contentTagStageImage)
 		return FetchBaseImageInfo{BaseImagePulled: info.BaseImagePulled, BaseImageSource: info.BaseImageSource}, err
 
 	case ScratchBaseImage:
