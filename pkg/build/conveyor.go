@@ -284,10 +284,7 @@ func (c *Conveyor) GetImportServer(ctx context.Context, targetPlatform, imageNam
 
 	if !fromExternalImage {
 		img := c.GetImage(targetPlatform, imageName)
-		stg := img.GetLastNonEmptyStage()
-		if stg == nil {
-			stg = img.GetContentTagStage()
-		}
+		stg := img.GetBuiltOrContentTagStage()
 		if stg == nil {
 			return nil, fmt.Errorf("image %q has neither a built stage nor a content tag", imageName)
 		}
@@ -441,10 +438,7 @@ func (c *Conveyor) ShouldBeBuilt(ctx context.Context, opts ShouldBeBuiltOptions)
 
 func (c *Conveyor) FetchLastImageStage(ctx context.Context, targetPlatform, imageName string) error {
 	img := c.GetImage(targetPlatform, imageName)
-	lastImageStage := img.GetLastNonEmptyStage()
-	if lastImageStage == nil {
-		lastImageStage = img.GetContentTagStage()
-	}
+	lastImageStage := img.GetBuiltOrContentTagStage()
 	if lastImageStage == nil {
 		return fmt.Errorf("image %q has neither a built stage nor a content tag", imageName)
 	}

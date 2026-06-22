@@ -27,7 +27,7 @@ type BaseImageType string
 
 const (
 	ImageFromRegistryAsBaseImage BaseImageType = "ImageFromRegistryAsBaseImage"
-	StageAsBaseImage             BaseImageType = "StageAsBaseImage"
+	FromImage                    BaseImageType = "FromImage"
 	NoBaseImage                  BaseImageType = "NoBaseImage"
 	ScratchBaseImage             BaseImageType = "ScratchBaseImage"
 )
@@ -61,7 +61,7 @@ type ImageOptions struct {
 
 func NewImage(ctx context.Context, targetPlatform, name string, baseImageType BaseImageType, opts ImageOptions) (*Image, error) {
 	switch baseImageType {
-	case NoBaseImage, ImageFromRegistryAsBaseImage, StageAsBaseImage, ScratchBaseImage:
+	case NoBaseImage, ImageFromRegistryAsBaseImage, FromImage, ScratchBaseImage:
 	default:
 		panic(fmt.Sprintf("unknown opts.BaseImageType %q", baseImageType))
 	}
@@ -166,7 +166,7 @@ func ImageLogTagStyle(isFinal bool) color.Style {
 }
 
 func (i *Image) IsBasedOnStage() bool {
-	return i.baseImageType == StageAsBaseImage
+	return i.baseImageType == FromImage
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {
@@ -304,24 +304,26 @@ func (i *Image) GetContentTagStage() stage.Interface {
 	return i.newContentTagBaseStage(i, i.contentTagDesc)
 }
 
+func (i *Image) GetBuiltOrContentTagStage() stage.Interface {
+	if stg := i.GetLastNonEmptyStage(); stg != nil {
+		return stg
+	}
+	return i.GetContentTagStage()
+}
+
 func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.StorageManagerInterface, storageOpts manager.StorageOptions) error {
 	logboek.Context(ctx).Debug().LogF(" -- SetupBaseImage for %q\n", i.Name)
 
 	switch i.baseImageType {
-	case StageAsBaseImage:
+	case FromImage:
 		baseImg, err := i.Conveyor.FindImage(i.TargetPlatform, i.baseImageName)
 		if err != nil {
 			return fmt.Errorf("base image for %q: %w", i.Name, err)
 		}
 
-		if lastStage := baseImg.GetLastNonEmptyStage(); lastStage != nil {
-			i.stageAsBaseImage = lastStage
-		} else {
-			contentTagDesc := baseImg.GetContentTagDesc()
-			if contentTagDesc == nil {
-				return fmt.Errorf("base image %q has neither a built stage nor a content tag", i.baseImageName)
-			}
-			i.stageAsBaseImage = i.newContentTagBaseStage(baseImg, contentTagDesc)
+		i.stageAsBaseImage = baseImg.GetBuiltOrContentTagStage()
+		if i.stageAsBaseImage == nil {
+			return fmt.Errorf("base image %q has neither a built stage nor a content tag", i.baseImageName)
 		}
 
 		i.baseImageReference = i.stageAsBaseImage.GetStageImage().Image.Name()
@@ -402,7 +404,7 @@ func (i *Image) SetupBaseImage(ctx context.Context, storageManager manager.Stora
 	if i.IsDockerfileImage && i.DockerfileImageConfig.Staged {
 		if werf.GetStagedDockerfileVersion() == werf.StagedDockerfileV1 {
 			switch i.baseImageType {
-			case StageAsBaseImage, ImageFromRegistryAsBaseImage:
+			case FromImage, ImageFromRegistryAsBaseImage:
 				if err := i.ExpandDependencies(ctx, EnvToMap(i.baseStageImage.Image.GetStageDesc().Info.Env)); err != nil {
 					return err
 				}
@@ -504,7 +506,7 @@ func (i *Image) FetchBaseImage(ctx context.Context) (FetchBaseImageInfo, error) 
 		}
 
 		return FetchBaseImageInfo{BaseImagePulled: true, BaseImageSource: BaseImageSourceTypeRegistry}, nil
-	case StageAsBaseImage:
+	case FromImage:
 		info, err := i.StorageManager.FetchStage(ctx, i.ContainerBackend, i.stageAsBaseImage)
 		return FetchBaseImageInfo{BaseImagePulled: info.BaseImagePulled, BaseImageSource: info.BaseImageSource}, err
 

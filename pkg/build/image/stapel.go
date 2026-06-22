@@ -44,7 +44,7 @@ func mapStapelConfigToImage(ctx context.Context, metaConfig *config.Meta, stapel
 		imageOpts.BaseImageReference = imageBaseConfig.From
 		imageOpts.FetchLatestBaseImage = imageBaseConfig.FromLatest
 	} else {
-		baseImageType = StageAsBaseImage
+		baseImageType = FromImage
 		imageOpts.BaseImageName = imageBaseConfig.From
 	}
 
