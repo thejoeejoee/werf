@@ -129,7 +129,10 @@ func (phase *BuildPhase) CalculateImageContentDigest(ctx context.Context, img *i
 		if err != nil {
 			return fmt.Errorf("stage %q GetContentDependencies: %w", stg.Name(), err)
 		}
-		stageDeps = append(stageDeps, deps)
+		if deps == "" {
+			continue
+		}
+		stageDeps = append(stageDeps, fmt.Sprintf("%s:%s", stg.Name(), deps))
 	}
 	img.SetContentDigest(calculateContentDigest(img.TargetPlatform, stageDeps))
 	return nil
@@ -137,16 +140,11 @@ func (phase *BuildPhase) CalculateImageContentDigest(ctx context.Context, img *i
 
 // calculateContentDigest hashes the target platform together with the
 // non-empty stage content dependencies. Stages that contribute nothing
-// (empty string) MUST NOT influence the result, so their presence or
-// absence in stageDeps does not change the digest.
+// (empty string) are excluded by the caller, so their presence or absence
+// does not change the digest. Each dependency is qualified with its stage
+// name so distinct stage sets cannot collide onto the same digest.
 func calculateContentDigest(targetPlatform string, stageDeps []string) string {
-	args := []string{targetPlatform}
-	for _, deps := range stageDeps {
-		if deps == "" {
-			continue
-		}
-		args = append(args, deps)
-	}
+	args := append([]string{targetPlatform}, stageDeps...)
 	return util.Sha3_224Hash(args...)
 }
 
@@ -181,8 +179,12 @@ func (phase *BuildPhase) CheckImageContentTagExistence(ctx context.Context, img 
 	return nil
 }
 
+// contentTagNoParentStageFilter is passed as parentStageCreationTs when looking up
+// content tags: unlike regular stages, content tags are not filtered by their parent.
+const contentTagNoParentStageFilter int64 = 0
+
 func (phase *BuildPhase) findContentTagStageDesc(ctx context.Context, img *image.Image, contentDigest string) (*imagePkg.StageDesc, error) {
-	stageDescSet, err := phase.Conveyor.StorageManager.GetStageDescSetByDigestWithCache(ctx, img.LogDetailedName(), contentDigest, 0)
+	stageDescSet, err := phase.Conveyor.StorageManager.GetStageDescSetByDigestWithCache(ctx, img.LogDetailedName(), contentDigest, contentTagNoParentStageFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +195,7 @@ func (phase *BuildPhase) findContentTagInCacheStorages(ctx context.Context, img 
 	storageManager := phase.Conveyor.StorageManager
 
 	for _, cacheStorage := range storageManager.GetCacheStagesStorageList() {
-		stageDescSet, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, img.LogDetailedName(), contentDigest, 0, cacheStorage)
+		stageDescSet, err := storageManager.GetStageDescSetByDigestFromStagesStorageWithCache(ctx, img.LogDetailedName(), contentDigest, contentTagNoParentStageFilter, cacheStorage)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -213,7 +215,15 @@ func selectLatestStageDesc(stageDescSet imagePkg.StageDescSet) *imagePkg.StageDe
 
 	var latestDesc *imagePkg.StageDesc
 	for desc := range stageDescSet.Iter() {
-		if latestDesc == nil || desc.StageID.CreationTs > latestDesc.StageID.CreationTs {
+		if latestDesc == nil {
+			latestDesc = desc
+			continue
+		}
+		if desc.StageID.CreationTs > latestDesc.StageID.CreationTs {
+			latestDesc = desc
+			continue
+		}
+		if desc.StageID.CreationTs == latestDesc.StageID.CreationTs && desc.StageID.String() > latestDesc.StageID.String() {
 			latestDesc = desc
 		}
 	}
@@ -560,6 +570,7 @@ func (phase *BuildPhase) AfterImageStages(ctx context.Context, img *image.Image)
 func (phase *BuildPhase) publishContentTag(ctx context.Context, img *image.Image) error {
 	lastStage := img.GetLastNonEmptyStage()
 	if lastStage == nil || lastStage.GetStageImage() == nil || lastStage.GetStageImage().Image.GetStageDesc() == nil {
+		logboek.Context(ctx).Debug().LogF("content tag not published for image %q: no built stage\n", img.GetName())
 		return nil
 	}
 	primaryStagesStorage := phase.Conveyor.StorageManager.GetStagesStorage()
