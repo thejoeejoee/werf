@@ -140,11 +140,18 @@ func (phase *BuildPhase) CalculateImageContentDigest(ctx context.Context, img *i
 
 // calculateContentDigest hashes the target platform together with the
 // non-empty stage content dependencies. Stages that contribute nothing
-// (empty string) are excluded by the caller, so their presence or absence
-// does not change the digest. Each dependency is qualified with its stage
-// name so distinct stage sets cannot collide onto the same digest.
+// (empty string) MUST NOT influence the result, so their presence or
+// absence in stageDeps does not change the digest. Callers qualify each
+// dependency with its stage name so distinct stage sets cannot collide
+// onto the same digest.
 func calculateContentDigest(targetPlatform string, stageDeps []string) string {
-	args := append([]string{targetPlatform}, stageDeps...)
+	args := []string{targetPlatform}
+	for _, deps := range stageDeps {
+		if deps == "" {
+			continue
+		}
+		args = append(args, deps)
+	}
 	return util.Sha3_224Hash(args...)
 }
 
