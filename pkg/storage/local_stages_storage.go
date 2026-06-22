@@ -187,23 +187,12 @@ func (storage *LocalStagesStorage) DeleteStage(ctx context.Context, stageDesc *i
 	return nil
 }
 
-func (storage *LocalStagesStorage) AddStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error {
-	return storage.ContainerBackend.Tag(ctx, stageDesc.Info.Name, fmt.Sprintf("%s:%s", stageDesc.Info.Repository, tag), container_backend.TagOpts{})
+func (storage *LocalStagesStorage) AddStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
+	return fmt.Errorf("not implemented")
 }
 
-func (storage *LocalStagesStorage) CheckStageCustomTag(ctx context.Context, stageDesc *image.StageDesc, tag string) error {
-	fullImageName := fmt.Sprintf("%s:%s", stageDesc.Info.Repository, tag)
-	info, err := storage.ContainerBackend.GetImageInfo(ctx, fullImageName, container_backend.GetImageInfoOpts{})
-	if err != nil {
-		return fmt.Errorf("unable to get image %s info: %w", fullImageName, err)
-	}
-	if info == nil {
-		return fmt.Errorf("custom tag %q not found", tag)
-	}
-	if info.ID != stageDesc.Info.ID {
-		return fmt.Errorf("custom tag %q image must be the same as associated content-based tag %q image", tag, stageDesc.StageID.String())
-	}
-	return nil
+func (storage *LocalStagesStorage) CheckStageCustomTag(_ context.Context, _ *image.StageDesc, _ string) error {
+	return fmt.Errorf("not implemented")
 }
 
 func (storage *LocalStagesStorage) DeleteStageCustomTag(_ context.Context, _ string) error {
@@ -305,12 +294,18 @@ func (storage *LocalStagesStorage) UnregisterStageCustomTag(_ context.Context, _
 	return nil
 }
 
-func (storage *LocalStagesStorage) StoreContentTag(ctx context.Context, projectName, contentDigest string, stageDesc *image.StageDesc, _ container_backend.LegacyImageInterface) (*image.StageDesc, error) {
+func (storage *LocalStagesStorage) StoreContentTag(ctx context.Context, projectName, contentDigest string, stageDesc *image.StageDesc, stageImage container_backend.LegacyImageInterface) (*image.StageDesc, error) {
 	creationTs := stageDesc.StageID.CreationTs
 	destReference := storage.ConstructStageImageName(projectName, contentDigest, creationTs)
 
-	if err := storage.ContainerBackend.Tag(ctx, stageDesc.Info.Name, destReference, container_backend.TagOpts{}); err != nil {
-		return nil, fmt.Errorf("tag content tag image %s as %s: %w", stageDesc.Info.Name, destReference, err)
+	labels := make(map[string]string, len(stageDesc.Info.Labels)+1)
+	for k, v := range stageDesc.Info.Labels {
+		labels[k] = v
+	}
+	labels[image.WerfParentStageID] = stageDesc.StageID.String()
+
+	if err := storage.MutateAndPushImage(ctx, stageDesc.Info.Name, destReference, image.SpecConfig{Labels: labels, Env: stageDesc.Info.Env}, stageImage); err != nil {
+		return nil, fmt.Errorf("mutate and push content tag image from %s to %s: %w", stageDesc.Info.Name, destReference, err)
 	}
 
 	return storage.GetContentTagStageDesc(ctx, projectName, contentDigest, creationTs)
