@@ -62,7 +62,7 @@ jobs:
       - name: Cleanup
         run: |
           . $(werf ci-env github --as-file)
-          werf cleanup
+          werf cleanup --dry-run
         env:
           WERF_NAMESPACE: werfio-production
           WERF_DIR: docs
